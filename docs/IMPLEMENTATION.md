@@ -1,89 +1,48 @@
 # 实现说明
 
-## 架构
+## 当前交互流程
 
-- 后端：FastAPI + SQLAlchemy + SQLite
-- 前端：Next.js App Router + TypeScript
-- 存储：数据库 + 本地文件系统
+1. 在“书籍管理”中创建书籍  
+2. 进入对应书籍页面  
+3. 左侧章节目录选择章节  
+4. 在当前章节输入描述并生成正文  
+5. 在中间正文区阅读/编辑，系统自动保存  
 
-模块拆分：
+不再提供独立生成页面。
 
-- 训练模块（数据集生成 + LoRA 微调）
-- 生成模块（独立生成）
-- 书籍章节模块（分章写作与编辑）
+## 前端改动
 
-## 后端实现
+- 移除导航中的“独立生成”
+- 删除 `frontend/app/generate/page.tsx`
+- 主页改为“训练 + 书籍创作”两个入口
+- 重构 `frontend/app/books/[id]/page.tsx`：
+  - 左侧目录、右侧正文阅读编辑
+  - 章节名/描述/正文自动保存（防抖）
+  - 切章前自动落盘
+  - 生成后展示本章提示词（可展开）
 
-### API
+## 自动保存策略
 
-- `app/api/training.py`
-  - 启动训练
-  - 查询任务
-  - 中断训练
-  - 恢复训练
-- `app/api/generation.py`
-  - 章节生成
-  - 独立生成
-- `app/api/books.py`
-  - 书籍/章节 CRUD
+- 编辑章节名、章节描述、正文时触发防抖保存（1.2s）
+- 手动切换章节前先强制保存当前章节
+- 提供“立即保存”按钮用于手动落盘
+- 保存状态展示：待保存 / 保存中 / 已保存 / 保存失败
 
-### 训练任务控制
+## 后端生成流程
 
-文件：`app/tasks/training_tasks.py`
+`POST /api/generation/chapter`
 
-- 使用后台线程执行训练流水线
-- 运行态维护：
-  - 当前线程
-  - 当前训练子进程
-  - 中断标记
-  - 任务参数缓存
-- 中断逻辑：
-  - 设置中断标记
-  - 终止训练子进程
-  - 任务状态改为 `interrupted`
-- 恢复逻辑：
-  - 读取缓存/持久化参数
-  - 优先复用已生成数据集
-  - 若存在 checkpoint，则从 checkpoint 恢复训练
+1. 校验书籍、章节存在
+2. 校验章节描述不为空
+3. 获取该书历史章节内容作为记忆
+4. 调用外部 API（可选）完善章节提示词
+5. 将提示词输入本地模型生成章节正文
+6. 将生成内容写回章节并保存
 
-### 数据库扩展
+## 训练任务中断/恢复（保留）
 
-`training_jobs` 新增字段：
+- `POST /api/training/jobs/{id}/interrupt`
+- `POST /api/training/jobs/{id}/resume`
 
-- `params_json`：训练参数快照（恢复使用）
-- `dataset_path`：已生成数据集路径
-- `model_run_dir`：当前任务输出模型目录
-
-应用启动时执行轻量迁移（`app/db/migrations.py`）。
-
-## 训练脚本
-
-文件：`backend/scripts/train_lora.py`
-
-新增参数：
-
-- `--resume-from-checkpoint`
-
-行为：
-
-- 传入 checkpoint 时，调用 `Trainer.train(resume_from_checkpoint=...)`
-- 未传入时，执行普通训练
-
-## 前端实现
-
-页面：`frontend/app/train/page.tsx`
-
-- 每个训练任务卡片增加按钮：
-  - 运行中：`中断任务`
-  - 已中断/失败：`恢复任务`
-- 前端调用：
-  - `POST /api/training/jobs/{id}/interrupt`
-  - `POST /api/training/jobs/{id}/resume`
-- 与原有任务轮询逻辑共用，实时看到状态变化与日志。
-
-## 持久化与重启
-
-- 训练参数和关键路径写入数据库，便于恢复
-- 重启后可查看历史任务
-- 若要恢复任务，需要该任务有可用参数与模型目录
+恢复时优先复用已生成数据集，并尝试从 checkpoint 续训。
 

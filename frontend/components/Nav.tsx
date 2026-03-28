@@ -6,7 +6,6 @@ import { usePathname } from "next/navigation";
 const links = [
   { href: "/", label: "总览" },
   { href: "/train", label: "训练模型" },
-  { href: "/generate", label: "独立生成" },
   { href: "/books", label: "书籍管理" }
 ];
 
@@ -29,4 +28,3 @@ export default function Nav() {
     </header>
   );
 }
-

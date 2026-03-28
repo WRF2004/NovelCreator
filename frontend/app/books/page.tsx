@@ -23,7 +23,7 @@ export default function BooksPage() {
   }
 
   useEffect(() => {
-    refresh();
+    void refresh();
   }, []);
 
   async function handleCreate(e: React.FormEvent) {
@@ -51,8 +51,12 @@ export default function BooksPage() {
     <>
       <section className="panel">
         <h2>书籍管理</h2>
-        <p className="desc">新建书籍后可进入分章节创作页面，每章可输入描述并调用模型生成，再手动编辑保存。</p>
-        {error ? <p className="small" style={{ color: "var(--danger)" }}>{error}</p> : null}
+        <p className="desc">新建书籍后，点击书籍进入章节目录与正文页面进行创作。</p>
+        {error ? (
+          <p className="small" style={{ color: "var(--danger)" }}>
+            {error}
+          </p>
+        ) : null}
         <form onSubmit={handleCreate}>
           <div className="grid-2">
             <div className="field">
@@ -68,7 +72,9 @@ export default function BooksPage() {
               <textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={3} />
             </div>
           </div>
-          <button type="submit" disabled={loading}>{loading ? "创建中..." : "新建书籍"}</button>
+          <button type="submit" disabled={loading}>
+            {loading ? "创建中..." : "新建书籍"}
+          </button>
         </form>
       </section>
 

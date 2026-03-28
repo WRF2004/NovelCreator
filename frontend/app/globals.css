@@ -226,6 +226,45 @@ button:disabled {
   grid-template-columns: 300px 1fr;
 }
 
+.reader-main {
+  min-height: 76vh;
+}
+
+.reader-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.autosave-pill {
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  padding: 4px 10px;
+  font-size: 12px;
+  color: var(--muted);
+  background: rgba(255, 255, 255, 0.8);
+}
+
+.autosave-pending,
+.autosave-saving {
+  background: rgba(220, 158, 46, 0.16);
+}
+
+.autosave-saved {
+  background: rgba(11, 150, 93, 0.16);
+}
+
+.autosave-error {
+  background: rgba(193, 65, 42, 0.16);
+}
+
+.reader-textarea {
+  min-height: 58vh;
+  line-height: 1.75;
+}
+
 .chapter-list {
   display: grid;
   gap: 8px;

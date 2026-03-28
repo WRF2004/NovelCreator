@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-from pathlib import Path
-
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
@@ -28,13 +26,18 @@ def generate_chapter(payload: GenerateChapterRequest, db: Session = Depends(get_
     book = get_book(db, payload.book_id)
     if not book:
         raise HTTPException(status_code=404, detail="书籍不存在")
+
     chapter = get_chapter(db, payload.chapter_id)
     if not chapter or chapter.book_id != book.id:
         raise HTTPException(status_code=404, detail="章节不存在")
 
+    user_description = payload.user_description.strip()
+    if not user_description:
+        raise HTTPException(status_code=400, detail="当前章节描述不能为空")
+
     model_path = payload.model_path or book.model_path
     if not model_path:
-        raise HTTPException(status_code=400, detail="未指定模型路径，请在书籍中设置或请求中传入")
+        raise HTTPException(status_code=400, detail="未指定模型路径，请先在书籍中设置默认模型")
 
     try:
         model_path = str(require_existing_path(model_path))
@@ -44,7 +47,7 @@ def generate_chapter(payload: GenerateChapterRequest, db: Session = Depends(get_
     memory_text = chapter_memory_context(db, book_id=book.id, chapter_id=chapter.id, max_chars=7000)
     chapter_brief = build_enhanced_chapter_brief(
         memory_text=memory_text,
-        user_description=payload.user_description,
+        user_description=user_description,
         api_bridge=payload.api_bridge,
         use_api_context=payload.use_api_context,
     )
@@ -63,7 +66,7 @@ def generate_chapter(payload: GenerateChapterRequest, db: Session = Depends(get_
     update_chapter(
         db,
         chapter,
-        description=payload.user_description,
+        description=user_description,
         content=generated,
         status="generated",
     )
@@ -72,6 +75,7 @@ def generate_chapter(payload: GenerateChapterRequest, db: Session = Depends(get_
 
 @router.post("/standalone", response_model=GenerationResponse)
 def generate_standalone(payload: GenerateStandaloneRequest):
+    # 兼容保留：当前前端已不提供独立生成页面
     try:
         model_path = str(require_existing_path(payload.model_path))
     except ValueError as exc:
