@@ -1,0 +1,14 @@
+fastapi==0.115.12
+uvicorn[standard]==0.30.6
+sqlalchemy==2.0.38
+pydantic-settings==2.7.1
+python-multipart==0.0.20
+requests==2.32.3
+torch==2.7.0
+transformers==4.51.0
+datasets==3.5.0
+peft==0.15.2
+accelerate==1.6.0
+bitsandbytes==0.45.5
+safetensors==0.5.3
+sentencepiece==0.2.0

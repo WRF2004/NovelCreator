@@ -1,0 +1,20 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.venv/
+
+# Backend runtime storage
+backend/storage/app.db
+backend/storage/**/*.md
+backend/storage/**/*.jsonl
+
+# Node
+frontend/node_modules/
+frontend/.next/
+
+# OS
+.DS_Store
+Thumbs.db
+
